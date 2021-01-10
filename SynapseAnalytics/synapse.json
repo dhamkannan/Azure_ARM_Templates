@@ -22,7 +22,8 @@
     },
     "functions": [],
     "variables": {
-        "DataLakeUrl": "[concat('https://', parameters('datalakeName'), '.dfs.core.windows.net')]"
+        "DataLakeUrl": "[concat('https://', parameters('datalakeName'), '.dfs.core.windows.net')]",
+        "managedResourceGroupName": "[concat('synapseworkspace-managedrg-', parameters('workspaceName'))]"
     },
     "resources": [
                 {
@@ -34,7 +35,7 @@
                 "type": "SystemAssigned"
             },
             "properties": {
-                "managedResourceGroupName": "synapseworkspace-managedrg-10701873-e991-4eca-b347-37e0530cfea2",
+                "managedResourceGroupName": "[variables('managedResourceGroupName')]",
                 "defaultDataLakeStorage": {
                     "accountUrl": "[variables('DataLakeUrl')]",
                     "filesystem": "synapse"
