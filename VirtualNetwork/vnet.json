@@ -1,0 +1,107 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vnetName": {
+            "type": "string",
+            "defaultValue": "vnet-base"
+        },
+        "location": {
+            "type": "String",
+            "defaultValue": "[resourceGroup().location]"
+        },
+        "addressSpace": {
+            "type": "array",
+            "defaultValue": [
+                "10.10.0.0/16"
+            ]
+        },
+        "mainSubnet": {
+            "type": "object",
+            "defaultValue": {
+                "name": "main",
+                "addressPrefix": "10.10.1.0/24"
+            }
+        },
+        "dataSubnet": {
+            "type": "object",
+            "defaultValue": {
+                "name": "data",
+                "addressPrefix": "10.10.2.0/24"
+            }
+        },
+        "dmzSubnet": {
+            "type": "object",
+            "defaultValue": {
+                "name": "dmz",
+                "addressPrefix": "10.10.3.0/24",
+                "privateEndpointNetworkPolicies": "Disabled"
+            }
+        },
+        "AzureFirewallSubnet": {
+            "type": "object",
+            "defaultValue": {
+                "name": "AzureFirewallSubnet",
+                "addressPrefix": "10.10.4.0/24"
+            }
+        },
+        "AzureBastionSubnet": {
+            "type": "object",
+            "defaultValue": {
+                "name": "AzureBastionSubnet",
+                "addressPrefix": "10.10.5.0/24"
+            }
+        }
+    },
+    "functions": [],
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2020-05-01",
+            "name": "[parameters('vnetName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": "[parameters('addressSpace')]"
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('mainSubnet').name]",
+                        "properties": {
+                            "addressPrefix": "[parameters('mainSubnet').addressPrefix]"
+                        }
+                    },
+                    {
+                        "name": "[parameters('dataSubnet').name]",
+                        "properties": {
+                            "addressPrefix": "[parameters('dataSubnet').addressPrefix]"
+                        }
+                    },
+                    {
+                        "name": "[parameters('dmzSubnet').name]",
+                        "properties": {
+                            "addressPrefix": "[parameters('dmzSubnet').addressPrefix]",
+                            "privateEndpointNetworkPolicies": "[parameters('dmzSubnet').privateEndpointNetworkPolicies]"
+                        }
+                    },
+                    {
+                        "name": "[parameters('AzureBastionSubnet').name]",
+                        "properties": {
+                            "addressPrefix": "[parameters('AzureBastionSubnet').addressPrefix]"
+                        }
+                    },
+                    {
+                        "name": "[parameters('AzureFirewallSubnet').name]",
+                        "properties": {
+                            "addressPrefix": "[parameters('AzureFirewallSubnet').addressPrefix]"
+                        }
+                    }
+                ],
+                "enableDdosProtection": false,
+                "enableVmProtection": false
+            }
+        }
+    ],
+    "outputs": {}
+}

@@ -1,0 +1,155 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "FirewallName": {
+            "type": "String"
+        },
+        "vnetName": {
+            "type": "string"
+        },
+        "AssociatedSubnetName": {
+            "type": "string"
+        }
+    },
+    "functions": [],
+    "variables": {
+        "FirewallSubnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('VnetName'),'AzureFirewallSubnet')]",
+        "AssociatedSubnetID": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('VnetName'),'AzureFirewallSubnet')]",
+        "pipName": "[concat(parameters('FirewallName'), '-pip')]",
+        "routeTableName": "[concat('routetable-', parameters('AssociatedSubnetName'), '-subnet')]",
+        "routeName": "[concat('route-', parameters('AssociatedSubnetName'), '-subnet')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "apiVersion": "2020-05-01",
+            "name": "[variables('pipName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAddressVersion": "IPv4",
+                "publicIPAllocationMethod": "Static",
+                "idleTimeoutInMinutes": 4,
+                "ipTags": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/azureFirewalls",
+            "apiVersion": "2020-05-01",
+            "name": "[parameters('FirewallName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', variables('pipName'))]"
+            ],
+            "properties": {
+                "sku": {
+                    "tier": "Standard"
+                },
+                "ipConfigurations": [
+                    {
+                        "name": "[parameters('FirewallName')]",
+                        "properties": {
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('pipName'))]"
+                            },
+                            "subnet": {
+                                "id": "[variables('FirewallSubnetID')]"
+                            }
+                        }
+                    }
+                ],
+                "networkRuleCollections": [
+                    {
+                        "name": "Allow_DNS_lookup",
+                        "properties": {
+                            "priority": 1001,
+                            "action": {
+                                "type": "Allow"
+                            },
+                            "rules": [
+                                {
+                                    "name": "Allow_DNS",
+                                    "protocols": [
+                                        "UDP",
+                                        "TCP"
+                                    ],
+                                    "sourceAddresses": [
+                                        "[reference(variables('AssociatedSubnetID'), '2020-05-01').addressPrefix]"
+                                    ],
+                                    "destinationAddresses": [
+                                        "8.8.8.8",
+                                        "8.8.4.4"
+                                    ],
+                                    "sourceIpGroups": [],
+                                    "destinationIpGroups": [],
+                                    "destinationFqdns": [],
+                                    "destinationPorts": [
+                                        "53"
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "applicationRuleCollections": [
+                    {
+                        "name": "Allow_Azure",
+                        "properties": {
+                            "priority": 1002,
+                            "action": {
+                                "type": "Allow"
+                            },
+                            "rules": [
+                                {
+                                    "name": "Allow_AzurePortal",
+                                    "protocols": [
+                                        {
+                                            "protocolType": "Http",
+                                            "port": 80
+                                        },
+                                        {
+                                            "protocolType": "Https",
+                                            "port": 443
+                                        }
+                                    ],
+                                    "fqdnTags": [],
+                                    "targetFqdns": [
+                                        "*.azure.com"
+                                    ],
+                                    "sourceAddresses": [
+                                        "[reference(variables('AssociatedSubnetID'), '2020-05-01').addressPrefix]"
+                                    ],
+                                    "sourceIpGroups": []
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/routeTables",
+            "apiVersion": "2020-05-01",
+            "name": "[variables('routeTableName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "disableBgpRoutePropagation": true,
+                "routes": [
+                    {
+                        "name": "[variables('routeName')]",
+                        "properties": {
+                            "addressPrefix": "[reference(variables('AssociatedSubnetID'), '2020-05-01').addressPrefix]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[reference(parameters('FirewallName')).ipConfigurations[0].properties.privateIPAddress]"
+                        }
+                    }
+                ]
+            }
+        }
+    ],
+    "outputs": {
+    }
+}

@@ -1,0 +1,45 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vnetName": {
+            "value": "vnet-base"
+        },
+        "addressSpace": {
+            "value": [
+                "10.10.0.0/16"
+            ]
+        },
+        "mainSubnet": {
+            "value": {
+                "name": "main",
+                "addressPrefix": "10.10.1.0/24"
+            }
+        },
+        "dataSubnet": {
+            "value": {
+                "name": "data",
+                "addressPrefix": "10.10.2.0/24"
+            }
+        },
+        "dmzSubnet": {
+            "value": {
+                "name": "dmz",
+                "addressPrefix": "10.10.3.0/24",
+                "privateEndpointNetworkPolicies": "Disabled"
+            }
+        },
+        "AzureFirewallSubnet": {
+            "value": {
+                "name": "AzureFirewallSubnet",
+                "addressPrefix": "10.10.4.0/24"
+            }
+        },
+        "AzureBastionSubnet": {
+            "value": {
+                "name": "AzureBastionSubnet",
+                "addressPrefix": "10.10.5.0/24"
+            }
+        }
+    }
+}

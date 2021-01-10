@@ -29,5 +29,9 @@ New-AzResourceGroupDeployment -ResourceGroupName $RGName -Name 'Deployment-dataf
 New-AzResourceGroupDeployment -ResourceGroupName $RGName -Name 'Deployment-synapse' `
     -TemplateFile .\SynapseAnalytics\synapse.json -TemplateParameterFile .\SynapseAnalytics\synapse.parameters.json
 
+# Windows server Deployment
+New-AzResourceGroupDeployment -ResourceGroupName $RGName -Name 'Deployment-windows-server' `
+    -TemplateFile .\VirtualMachine\windowsserver.json -TemplateParameterFile .\VirtualMachine\windowsserver.parameters.json
+
 # Remove Azure resource group
 # Remove-AzResourceGroup -Name $RGName  -Force
