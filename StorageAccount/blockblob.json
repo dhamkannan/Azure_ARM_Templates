@@ -1,0 +1,129 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "storageAccountName": {
+            "type": "String"
+            },
+        "location": {
+            "type": "String",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for the resources."
+            }
+            },
+        "storageAccountType": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "allowedValues": [
+                "Standard_LRS",
+                "Standard_GRS",
+                "Standard_RAGRS",
+                "Premium_LRS"
+            ],
+            "metadata": {
+                "description": "Storage Account type"
+            }
+            },
+        "storageAccountKind": {
+            "type": "string",
+            "defaultValue": "BlobStorage",
+            "allowedValues": [
+                "BlobStorage",
+                "BlockBlobStorage",
+                "StorageV2",
+                "StorageV1"
+            ],
+            "metadata": {
+                "description": "Storage Account type"
+            }
+            },
+        "VnetName": {
+                "type": "String"
+            },
+        "VnetRG": {
+                "type": "String"
+            },
+        "SubnetName": {
+                "type": "String"
+            },
+        "vaultName": {
+                "type": "String"
+            },
+        "keyName": {
+                "type": "String"
+            }
+    },
+    "variables": {
+        "keyvaulturi": "[concat('https://', parameters('vaultName'), '.vault.azure.net')]",
+        "privateEndpointName": "[concat(parameters('storageAccountName'),'-pep')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-06-01",
+            "name": "[parameters('storageAccountName')]",
+            "location": "[parameters('location')]",
+            "sku": {
+                "name": "[parameters('storageAccountType')]"
+            },
+            "kind": "[parameters('storageAccountKind')]",
+            "properties": {
+                "minimumTlsVersion": "TLS1_2",
+                "allowBlobPublicAccess": false,
+                "isHnsEnabled": true,
+                "networkAcls": {
+                    "bypass": "AzureServices",
+                    "virtualNetworkRules": [],
+                    "ipRules": [],
+                    "defaultAction": "Deny"
+                },
+                "supportsHttpsTrafficOnly": true,
+                "encryption": {
+                    "keyvaultproperties": {
+                        "keyvaulturi": "[variables('keyvaulturi')]",
+                        "keyname": "[parameters('keyName')]"
+                    },
+                    "services": {
+                        "file": {
+                            "keyType": "Account",
+                            "enabled": true
+                        },
+                        "blob": {
+                            "keyType": "Account",
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                },
+                "accessTier": "Hot"
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateEndpoints",
+            "apiVersion": "2020-05-01",
+            "name": "[variables('privateEndpointName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+            ],
+            "properties": {
+                "privateLinkServiceConnections": [
+                    {
+                        "name": "[variables('privateEndpointName')]",
+                        "properties": {
+                            "privateLinkServiceId": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+                            "groupIds": [
+                                "dfs"
+                            ]
+                        }
+                    }
+                ],
+                "manualPrivateLinkServiceConnections": [],
+                "subnet": {
+                    "id": "[resourceId(parameters('VnetRG'), 'Microsoft.Network/virtualNetworks/subnets', parameters('VnetName'), parameters('SubnetName'))]"
+                }
+            }
+        }
+    ]
+}

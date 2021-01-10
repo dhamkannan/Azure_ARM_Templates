@@ -1,0 +1,50 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspaceName": {
+            "type": "string"
+        },
+        "datalakeName": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]"
+        },
+        "sqlAdminUser": {
+            "type": "string",
+            "defaultValue": "sqladminuser"
+        },
+        "sqlAdminPassword": {
+            "type": "securestring"
+        }
+    },
+    "functions": [],
+    "variables": {
+        "DataLakeUrl": "[concat('https://', parameters('datalakeName'), '.dfs.core.windows.net')]"
+    },
+    "resources": [
+                {
+            "type": "Microsoft.Synapse/workspaces",
+            "apiVersion": "2019-06-01-preview",
+            "name": "[parameters('workspaceName')]",
+            "location": "[parameters('location')]",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "managedResourceGroupName": "synapseworkspace-managedrg-10701873-e991-4eca-b347-37e0530cfea2",
+                "defaultDataLakeStorage": {
+                    "accountUrl": "[variables('DataLakeUrl')]",
+                    "filesystem": "synapse"
+                },
+                "sqlAdministratorLogin": "[parameters('sqlAdminUser')]",
+                "sqlAdministratorLoginPassword": "[parameters('sqlAdminPassword')]",
+                "privateEndpointConnections": [],
+                "encryption": {}
+            }
+        }
+    ],
+    "outputs": {}
+}

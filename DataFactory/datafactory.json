@@ -1,0 +1,103 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "dataFactoryName": {
+        "type": "string",
+        "metadata": {
+          "description": "Data Factory Name"
+        }
+      },
+    "location": {
+        "type": "string",
+        "defaultValue": "[resourceGroup().location]"
+      },
+    "VnetName": {
+        "type": "String"
+        },
+    "VnetRG": {
+      "type": "String"
+      },
+    "SubnetName": {
+        "type": "String"
+      }
+  },
+  "variables": {
+    "portalPrivateEndpointName": "[concat(parameters('dataFactoryName'),'-portal-pep')]",
+    "datafactoryPrivateEndpointName": "[concat(parameters('dataFactoryName'),'-datafactory-pep')]",
+    "subnetId": "[resourceId(parameters('VnetRG'), 'Microsoft.Network/virtualNetworks/subnets', parameters('VnetName'), parameters('SubnetName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.DataFactory/factories",
+      "apiVersion": "2018-06-01",
+      "name": "[parameters('dataFactoryName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "networkAcls": {
+                    "bypass": "AzureServices",
+                    "virtualNetworkRules": [],
+                    "ipRules": [],
+                    "defaultAction": "Deny"
+                }
+      },
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "resources": [
+      ]
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2020-05-01",
+      "name": "[variables('portalPrivateEndpointName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+          "[resourceId('Microsoft.DataFactory/factories', parameters('dataFactoryName'))]"
+      ],
+      "properties": {
+          "privateLinkServiceConnections": [
+              {
+                  "name": "[variables('portalPrivateEndpointName')]",
+                  "properties": {
+                      "privateLinkServiceId": "[resourceId('Microsoft.DataFactory/factories', parameters('dataFactoryName'))]",
+                      "groupIds": [
+                          "portal"
+                      ]
+                  }
+              }
+          ],
+          "manualPrivateLinkServiceConnections": [],
+          "subnet": {
+              "id": "[variables('subnetId')]"
+          }
+      }
+    },
+    {
+      "type": "Microsoft.Network/privateEndpoints",
+      "apiVersion": "2020-05-01",
+      "name": "[variables('datafactoryPrivateEndpointName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+          "[resourceId('Microsoft.DataFactory/factories', parameters('dataFactoryName'))]"
+      ],
+      "properties": {
+          "privateLinkServiceConnections": [
+              {
+                "name": "[variables('datafactoryPrivateEndpointName')]",
+                "properties": {
+                  "privateLinkServiceId": "[resourceId('Microsoft.DataFactory/factories', parameters('dataFactoryName'))]",
+                  "groupIds": [
+                    "dataFactory"
+                  ]
+                }
+              }
+          ],
+          "manualPrivateLinkServiceConnections": [],
+          "subnet": {
+              "id": "[variables('subnetId')]"
+          }
+      }
+    }
+  ]
+}

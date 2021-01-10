@@ -1,0 +1,24 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "VnetName": {
+            "value": "vnet-base"
+        },
+        "VnetRG": {
+            "value": "rg-network"
+        },
+        "SubnetName": {
+            "value": "dmz"
+        },
+        "vaultName": {
+            "value": "testkv0020"
+        },
+        "keyName": {
+            "value": "key1"
+        },
+        "groupObjectID": {
+            "value": "ffffffff-7777-1a2b-97dc-aaaaaaaaaaa"
+        }
+    }
+}
